@@ -225,5 +225,5 @@ def predict():
                              dose=dose_str if 'dose_str' in locals() else '50')
 # 主函数
 if __name__ == '__main__':
-    # 本地开发时运行
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port)
