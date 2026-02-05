@@ -1,0 +1,345 @@
+{% extends "layout.html" %}
+
+{% block title %}药物性质预测结果{% endblock %}
+
+{% block content %}
+<div class="result-container">
+    {% if error %}
+    <div class="error-card">
+        <div class="error-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h2>预测失败</h2>
+        </div>
+        <div class="error-body">
+            <p>{{ error }}</p>
+            <div class="error-actions">
+                <a href="/" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> 返回重试
+                </a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    
+    <div class="result-header">
+        <h1><i class="fas fa-pills"></i> 药物性质预测结果</h1>
+        <a href="/" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> 新的预测
+        </a>
+    </div>
+    
+    <div class="result-grid">
+        <!-- 左侧：输入信息 -->
+        <div class="result-card">
+            <h3><i class="fas fa-info-circle"></i> 输入信息</h3>
+            
+            <div class="input-display">
+                <div class="input-item">
+                    <label>SMILES结构:</label>
+                    <div class="value-box">
+                        {{ smiles }}
+                        <button class="copy-btn" onclick="copyToClipboard('{{ smiles }}')" title="复制SMILES">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="input-item">
+                    <label>单次最大口服剂量:</label>
+                    <div class="value-box">
+                        {{ dose }} mg
+                    </div>
+                </div>
+                
+                <!-- 分子结构图像 -->
+                <div class="input-item">
+                    <label>分子结构示意图:</label>
+                    <div class="molecule-image">
+                        {% if mol_image %}
+                            <img src="data:image/png;base64,{{ mol_image }}" alt="分子结构" class="molecule-img">
+                        {% else %}
+                            <div class="no-image">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>无法生成分子图像</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧：预测结果 -->
+        <div class="result-card">
+            <h3><i class="fas fa-chart-bar"></i> 预测结果</h3>
+            
+            <div class="prediction-results">
+                <div class="prediction-item">
+                    <span class="prediction-label">logS (溶解度):</span>
+                    <span class="prediction-value">{{ logS if logS else "待计算" }}</span>
+                </div>
+                
+                <div class="prediction-item">
+                    <span class="prediction-label">MW (分子量):</span>
+                    <span class="prediction-value">{{ MW if MW else "待计算" }}</span>
+                    <span class="prediction-unit">g/mol</span>
+                </div>
+                
+                <div class="prediction-item">
+                    <span class="prediction-label">D₀ (剂量数):</span>
+                    <span class="prediction-value">{{ D0 if D0 else "待计算" }}</span>
+                </div>
+                
+                <div class="prediction-item">
+                    <span class="prediction-label">logPapp (表观渗透系数):</span>
+                    <span class="prediction-value">{{ logPapp if logPapp else "待计算" }}</span>
+                </div>
+                
+                <!-- BCS分类 - 重新添加并应用醒目样式 -->
+                <div class="prediction-item highlight">
+                    <span class="prediction-label">BCS分类:</span>
+                    <span class="prediction-value bcs-class bcs-{{ BCS.replace('类', '')|lower if BCS else 'unknown' }}">
+                        {{ BCS if BCS else "待计算" }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="prediction-note">
+                <p><i class="fas fa-info-circle"></i> 预测时间: {{ now if now else "刚刚" }}</p>
+                <p><i class="fas fa-cogs"></i> 基于机器学习模型预测</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- BCS分类说明 -->
+    <div class="result-card full-width">
+        <h3><i class="fas fa-graduation-cap"></i> BCS分类说明</h3>
+        
+        <div class="solubility-scale">
+            <div class="scale-item class1">
+                <div class="scale-label">BCS I类</div>
+                <div class="scale-desc">高溶解度，高渗透性</div>
+            </div>
+            
+            <div class="scale-item class2">
+                <div class="scale-label">BCS II类</div>
+                <div class="scale-desc">低溶解度，高渗透性</div>
+            </div>
+            
+            <div class="scale-item class3">
+                <div class="scale-label">BCS III类</div>
+                <div class="scale-desc">高溶解度，低渗透性</div>
+            </div>
+            
+            <div class="scale-item class4">
+                <div class="scale-label">BCS IV类</div>
+                <div class="scale-desc">低溶解度，低渗透性</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- API调用信息 -->
+    <div class="result-card">
+        <h3><i class="fas fa-code"></i> API调用</h3>
+        <p>您也可以通过API接口获取预测结果：</p>
+        <div class="code-snippet">
+            <code>
+                POST /api/predict<br>
+                Content-Type: application/json<br>
+                {<br>
+                &nbsp;&nbsp;"smiles": "{{ smiles }}"<br>
+                }
+            </code>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    /* 分子图像样式 */
+    .molecule-image {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        text-align: center;
+    }
+    
+    .molecule-img {
+        max-width: 100%;
+        height: auto;
+        max-height: 200px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        padding: 5px;
+        background: white;
+    }
+    
+    .no-image {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem;
+        color: #6c757d;
+    }
+    
+    .no-image i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: #dc3545;
+    }
+    
+    /* 保持原有样式，只添加新样式 */
+    .result-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .result-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .full-width {
+        grid-column: 1 / -1;
+    }
+    
+    /* BCS分类样式 - 深蓝色文字，浅色背景 */
+    .bcs-class {
+        padding: 0.5rem 1.2rem;
+        border-radius: 25px;
+        font-weight: 800;
+        font-size: 1.2rem;
+        text-align: center;
+        display: inline-block;
+        border: 3px solid;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        color: #2c3e50; /* 深蓝色文字 */
+        background-color: #e8f4ff; /* 浅蓝色背景 */
+        border-color: #3498db; /* 中等蓝色边框 */
+    }
+    
+    /* 不同BCS类别的特定样式 */
+    .bcs-1 { 
+        background-color: #d4edda; /* 浅绿色背景 */
+        border-color: #28a745;
+        color: #155724; /* 深绿色文字 */
+    }
+    
+    .bcs-2 { 
+        background-color: #fff3cd; /* 浅黄色背景 */
+        border-color: #ffc107;
+        color: #856404; /* 深棕色文字 */
+    }
+    
+    .bcs-3 { 
+        background-color: #d1ecf1; /* 浅青色背景 */
+        border-color: #17a2b8;
+        color: #0c5460; /* 深青色文字 */
+    }
+    
+    .bcs-4 { 
+        background-color: #f8d7da; /* 浅红色背景 */
+        border-color: #dc3545;
+        color: #721c24; /* 深红色文字 */
+    }
+    
+    .bcs-unknown { 
+        background-color: #e2e3e5; /* 浅灰色背景 */
+        border-color: #6c757d;
+        color: #383d41; /* 深灰色文字 */
+    }
+    
+    /* 突出显示整个BCS预测项 */
+    .prediction-item.highlight {
+        background: linear-gradient(135deg, #f0f7ff, #e8f4ff);
+        border-left: 5px solid #4a6fa5;
+        border-radius: 10px;
+        margin: 1rem 0;
+        padding: 1.2rem;
+        box-shadow: 0 4px 12px rgba(74, 111, 165, 0.15);
+    }
+    
+    .prediction-item.highlight .prediction-label {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        min-width: 160px;
+    }
+    
+    .prediction-item.highlight .prediction-value {
+        font-size: 1.4rem;
+        font-weight: 900;
+    }
+    
+    /* BCS分类说明卡片样式 */
+    .solubility-scale {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .scale-item {
+        padding: 1.5rem;
+        border-radius: 8px;
+        text-align: center;
+    }
+    
+    .class1 { 
+        background-color: rgba(39, 174, 96, 0.15); 
+        border: 2px solid #27ae60;
+    }
+    
+    .class2 { 
+        background-color: rgba(243, 156, 18, 0.15); 
+        border: 2px solid #f39c12;
+    }
+    
+    .class3 { 
+        background-color: rgba(41, 128, 185, 0.15); 
+        border: 2px solid #2980b9;
+    }
+    
+    .class4 { 
+        background-color: rgba(231, 76, 60, 0.15); 
+        border: 2px solid #e74c3c;
+    }
+    
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+        .molecule-img {
+            max-height: 150px;
+        }
+        
+        .bcs-class {
+            padding: 0.4rem 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .prediction-item.highlight .prediction-label {
+            min-width: 140px;
+            font-size: 1.1rem;
+        }
+        
+        .prediction-item.highlight .prediction-value {
+            font-size: 1.3rem;
+        }
+    }
+</style>
+
+<script>
+    // 复制SMILES到剪贴板
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('已复制到剪贴板: ' + text);
+        }).catch(err => {
+            console.error('复制失败: ', err);
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,225 @@
+{% extends "layout.html" %}
+
+{% block title %}药物性质预测系统{% endblock %}
+
+{% block content %}
+<div class="prediction-container">
+    <div class="prediction-header">
+        <h1><i class="fas fa-flask"></i> 药物性质预测</h1>
+        <p>输入药物SMILES结构和口服剂量，预测关键药物性质参数</p>
+    </div>
+    
+    <div class="prediction-form-container">
+        <form action="/predict" method="post" class="prediction-form">
+            <div class="form-group">
+                <label for="smiles">
+                    <i class="fas fa-molecule"></i> SMILES结构 *
+                </label>
+                <input type="text" 
+                       id="smiles" 
+                       name="smiles" 
+                       required 
+                       placeholder="例如: CC(C(=O)O)N"
+                       value="{{ default_smiles if default_smiles else '' }}">
+                <div class="form-help">
+                    <small>必须输入药物的SMILES结构式</small>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="dose">
+                    <i class="fas fa-weight"></i> 单次最大口服剂量
+                </label>
+                <input type="number" 
+                       id="dose" 
+                       name="dose" 
+                       min="1" 
+                       max="10000" 
+                       step="1"
+                       placeholder="单位: mg"
+                       value="{{ default_dose if default_dose else 50 }}">
+                <div class="form-help">
+                    <small>单位: mg，默认为50mg</small>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-calculator"></i> 开始预测
+                </button>
+                <button type="reset" class="btn btn-secondary">
+                    <i class="fas fa-redo"></i> 重置
+                </button>
+            </div>
+        </form>
+        
+        <div class="form-info">
+            <h3><i class="fas fa-lightbulb"></i> 预测参数说明</h3>
+            <ul>
+                <li><strong>logS</strong>: 药物溶解度（对数标度）</li>
+                <li><strong>MW</strong>: 分子量（g/mol）</li>
+                <li><strong>D₀</strong>: 剂量数</li>
+                <li><strong>logPapp</strong>: 表观渗透系数</li>
+                <li><strong>BCS分类</strong>: 生物药剂学分类系统</li>
+            </ul>
+            
+            <div class="example-smiles">
+                <h4>示例SMILES:</h4>
+                <div class="examples">
+                    <button type="button" onclick="setExample('CC(C(=O)O)N', '布洛芬')">布洛芬</button>
+                    <button type="button" onclick="setExample('CC1=CC=C(C=C1)C(C)C(=O)O', '阿司匹林')">阿司匹林</button>
+                    <button type="button" onclick="setExample('CN1C=NC2=C1C(=O)N(C(=O)N2C)C', '咖啡因')">咖啡因</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .prediction-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 20px;
+    }
+    
+    .prediction-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    
+    .prediction-header h1 {
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .prediction-header p {
+        color: var(--secondary-color);
+        font-size: 1.1rem;
+    }
+    
+    .prediction-form-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+        background: white;
+        border-radius: 10px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    @media (max-width: 768px) {
+        .prediction-form-container {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .prediction-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .form-group label {
+        font-weight: bold;
+        color: var(--dark-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-group input {
+        padding: 0.75rem;
+        border: 2px solid #dee2e6;
+        border-radius: 5px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+    }
+    
+    .form-group input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.1);
+    }
+    
+    .form-help small {
+        color: var(--secondary-color);
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .form-info {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    .form-info h3 {
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-info ul {
+        list-style: none;
+        padding-left: 0;
+        margin-bottom: 2rem;
+    }
+    
+    .form-info li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .example-smiles {
+        margin-top: 2rem;
+    }
+    
+    .example-smiles h4 {
+        margin-bottom: 1rem;
+        color: var(--secondary-color);
+    }
+    
+    .examples {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .examples button {
+        padding: 0.5rem 1rem;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    
+    .examples button:hover {
+        background: #3a5a8c;
+    }
+</style>
+
+<script>
+    function setExample(smiles, name) {
+        document.getElementById('smiles').value = smiles;
+        alert(`已载入${name}的SMILES结构`);
+    }
+</script>
+{% endblock %}

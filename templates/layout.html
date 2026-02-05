@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BCS分类预测系统{% endblock %}</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 导航栏样式 */
+        .navbar {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+        
+        .nav-links a:hover {
+            opacity: 0.8;
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* 结果容器 */
+        .result-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 20px;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .result-header h1 {
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        
+        /* 卡片样式 */
+        .result-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .result-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* 输入显示 */
+        .input-display {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .input-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .input-item label {
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        
+        .value-box {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            word-break: break-all;
+        }
+        
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 3px;
+        }
+        
+        .copy-btn:hover {
+            background: rgba(74, 111, 165, 0.1);
+        }
+        
+        /* 预测结果 */
+        .prediction-results {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        
+        .prediction-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .prediction-item.highlight {
+            background: #e8f4ff;
+            border-left-color: var(--info-color);
+        }
+        
+        .prediction-label {
+            font-weight: bold;
+            min-width: 180px;
+            color: var(--dark-color);
+        }
+        
+        .prediction-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .prediction-unit {
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+        }
+        
+        .prediction-note {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+        }
+        
+        /* 错误卡片 */
+        .error-card {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            max-width: 600px;
+            margin: 2rem auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .error-header {
+            color: var(--danger-color);
+            margin-bottom: 1.5rem;
+        }
+        
+        .error-header i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .error-body {
+            margin-bottom: 1.5rem;
+        }
+        
+        .error-actions {
+            margin-top: 1.5rem;
+        }
+        
+        /* API代码片段 */
+        .code-snippet {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 5px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            border: 1px solid #dee2e6;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .result-header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .prediction-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .prediction-label {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-content">
+            <a href="/" class="logo">
+                <i class="fas fa-pills"></i> BCS分类预测系统
+            </a>
+            <div class="nav-links">
+                <a href="/"><i class="fas fa-home"></i> 首页</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- 页脚 -->
+    <footer style="text-align: center; padding: 2rem; color: var(--secondary-color); margin-top: 2rem; border-top: 1px solid #eee;">
+        <p>© 2026 BCS预测系统 | 基于机器学习模型</p>
+    </footer>
+
+    <script>
+        // 复制SMILES到剪贴板
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已复制到剪贴板: ' + text);
+            }).catch(err => {
+                console.error('复制失败: ', err);
+            });
+        }
+    </script>
+</body>
+</html>
